@@ -25,7 +25,33 @@ def init_db():
 
 init_db()
 
-# --------------------- Operaciones CRUD ---------------------
+# --------------------- Ruta Principal con HTML ---------------------
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        cantidad = int(request.form['cantidad'])
+        precio = float(request.form['precio'])
+        proveedor = request.form['proveedor']
+        categoria = request.form['categoria']
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("INSERT INTO productos (nombre, cantidad, precio, proveedor, categoria) VALUES (?, ?, ?, ?, ?)",
+                  (nombre, cantidad, precio, proveedor, categoria))
+        conn.commit()
+        conn.close()
+
+    # Mostrar productos existentes
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT * FROM productos")
+    productos = c.fetchall()
+    conn.close()
+
+    return render_template("index.html", productos=productos)
+
+# --------------------- API REST ---------------------
 @app.route('/create', methods=['POST'])
 def create_producto():
     data = request.get_json()
@@ -68,7 +94,6 @@ def delete_producto(id):
     return jsonify({'message': 'Producto eliminado'})
 
 # --------------------- XML y Reportes ---------------------
-
 @app.route('/report/xml', methods=['GET'])
 def report_xml():
     conn = sqlite3.connect(DB_NAME)
@@ -116,13 +141,9 @@ def report_summary():
         "porcentaje_por_categoria": porcentajes
     })
 
-@app.route('/')
-def home():
-    return render_template("index.html")
-
+# --------------------- Run ---------------------
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port= 10000)
+    app.run(host='0.0.0.0', port=10000)
 
-from flask import render_template
 
 
