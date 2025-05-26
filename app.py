@@ -1,7 +1,10 @@
+# app.py (refactorizado para Render)
+
 from flask import Flask, request, jsonify, make_response, render_template
 import sqlite3
 import xml.etree.ElementTree as ET
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -25,33 +28,7 @@ def init_db():
 
 init_db()
 
-# --------------------- Ruta Principal con HTML ---------------------
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        cantidad = int(request.form['cantidad'])
-        precio = float(request.form['precio'])
-        proveedor = request.form['proveedor']
-        categoria = request.form['categoria']
-
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("INSERT INTO productos (nombre, cantidad, precio, proveedor, categoria) VALUES (?, ?, ?, ?, ?)",
-                  (nombre, cantidad, precio, proveedor, categoria))
-        conn.commit()
-        conn.close()
-
-    # Mostrar productos existentes
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT * FROM productos")
-    productos = c.fetchall()
-    conn.close()
-
-    return render_template("index.html", productos=productos)
-
-# --------------------- API REST ---------------------
+# --------------------- Operaciones CRUD ---------------------
 @app.route('/create', methods=['POST'])
 def create_producto():
     data = request.get_json()
@@ -141,11 +118,12 @@ def report_summary():
         "porcentaje_por_categoria": porcentajes
     })
 
-# --------------------- Run ---------------------
-import os
+@app.route('/')
+def home():
+    return render_template("index.html")
+
+# Ejecutar con puerto de entorno (Render)
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT',10000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-
 
